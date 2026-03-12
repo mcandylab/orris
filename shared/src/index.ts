@@ -71,6 +71,15 @@ export enum TankType {
   OVERSEER     = 9,  // spawns drones
 }
 
+/** Firing pattern for tanks - determines how bullets are spread */
+export enum FiringPattern {
+  SINGLE = 0,       // one central bullet
+  TWIN = 1,         // two front-facing bullets
+  FLANK = 2,        // front + back bullet (Flank Guard)
+  TRIPLE_SPREAD = 3, // three bullets in a spread
+  DOUBLE_ANGLED = 4, // two angled bullets (Hunter)
+}
+
 export interface TankDefinition {
   type: TankType;
   name: string;
@@ -84,6 +93,7 @@ export interface TankDefinition {
   bulletLifetime: number; // seconds
   evolvesFrom: TankType | null;
   evolvesTo: TankType[];
+  firingPattern: FiringPattern;
 }
 
 // ─── XP & Leveling ────────────────────────────────────────────────────────────

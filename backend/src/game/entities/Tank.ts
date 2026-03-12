@@ -1,4 +1,4 @@
-import { TankType, TankDefinition } from '@orris/shared';
+import { TankType, TankDefinition, FiringPattern } from '@orris/shared';
 
 const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
   [TankType.BASIC]: {
@@ -14,6 +14,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 2,
     evolvesFrom: null,
     evolvesTo: [TankType.TWIN, TankType.SNIPER, TankType.MACHINE_GUN, TankType.FLANK_GUARD],
+    firingPattern: FiringPattern.SINGLE,
   },
   [TankType.TWIN]: {
     type: TankType.TWIN,
@@ -28,6 +29,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 2,
     evolvesFrom: TankType.BASIC,
     evolvesTo: [TankType.TRIPLE_SHOT],
+    firingPattern: FiringPattern.TWIN,
   },
   [TankType.SNIPER]: {
     type: TankType.SNIPER,
@@ -42,6 +44,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 3,
     evolvesFrom: TankType.BASIC,
     evolvesTo: [TankType.ASSASSIN, TankType.HUNTER],
+    firingPattern: FiringPattern.SINGLE,
   },
   [TankType.MACHINE_GUN]: {
     type: TankType.MACHINE_GUN,
@@ -56,6 +59,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 1.5,
     evolvesFrom: TankType.BASIC,
     evolvesTo: [TankType.DESTROYER],
+    firingPattern: FiringPattern.SINGLE,
   },
   [TankType.FLANK_GUARD]: {
     type: TankType.FLANK_GUARD,
@@ -70,6 +74,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 2,
     evolvesFrom: TankType.BASIC,
     evolvesTo: [TankType.OVERSEER],
+    firingPattern: FiringPattern.FLANK,
   },
   [TankType.TRIPLE_SHOT]: {
     type: TankType.TRIPLE_SHOT,
@@ -84,6 +89,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 2,
     evolvesFrom: TankType.TWIN,
     evolvesTo: [],
+    firingPattern: FiringPattern.TRIPLE_SPREAD,
   },
   [TankType.ASSASSIN]: {
     type: TankType.ASSASSIN,
@@ -98,6 +104,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 3.5,
     evolvesFrom: TankType.SNIPER,
     evolvesTo: [],
+    firingPattern: FiringPattern.SINGLE,
   },
   [TankType.HUNTER]: {
     type: TankType.HUNTER,
@@ -112,6 +119,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 3,
     evolvesFrom: TankType.SNIPER,
     evolvesTo: [],
+    firingPattern: FiringPattern.DOUBLE_ANGLED,
   },
   [TankType.DESTROYER]: {
     type: TankType.DESTROYER,
@@ -126,6 +134,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 2,
     evolvesFrom: TankType.MACHINE_GUN,
     evolvesTo: [],
+    firingPattern: FiringPattern.SINGLE,
   },
   [TankType.OVERSEER]: {
     type: TankType.OVERSEER,
@@ -140,6 +149,7 @@ const TANK_DEFINITIONS: Record<TankType, TankDefinition> = {
     bulletLifetime: 5,
     evolvesFrom: TankType.FLANK_GUARD,
     evolvesTo: [],
+    firingPattern: FiringPattern.SINGLE,
   },
 };
 
