@@ -6,8 +6,11 @@ import corsPlugin from './api/plugins/cors';
 import jwtPlugin from './api/plugins/jwt';
 import rateLimitPlugin from './api/plugins/rateLimit';
 import apiRoutes from './api/routes/index';
+import { createRoomsRoute } from './api/routes/rooms';
+import { GameServer } from './ws/GameServer';
+import { RoomManager } from './game/engine/RoomManager';
 
-export async function createApp(): Promise<FastifyInstance> {
+export async function createApp(roomManager?: RoomManager): Promise<FastifyInstance> {
   const isTest = config.NODE_ENV === 'test';
 
   const app = Fastify({
@@ -60,27 +63,54 @@ export async function createApp(): Promise<FastifyInstance> {
   await app.register(rateLimitPlugin);
   await app.register(apiRoutes);
 
+  if (roomManager) {
+    await app.register(createRoomsRoute(roomManager), { prefix: '/api' });
+  }
+
   return app;
 }
 
 async function start(): Promise<void> {
   let app: FastifyInstance | null = null;
+  let gameServer: GameServer | null = null;
 
   try {
+    // 1. Connect to database
     await connectDB();
-    app = await createApp();
 
+    // 2. Create GameServer (uWebSockets.js)
+    // Use a pino-compatible console logger for the game engine
+    const gameLogger = {
+      info: (obj: Record<string, unknown>, msg: string) => console.info(JSON.stringify({ ...obj, msg })),
+      debug: (obj: Record<string, unknown>, msg: string) => {
+        if (config.LOG_LEVEL === 'debug') console.debug(JSON.stringify({ ...obj, msg }));
+      },
+      warn: (obj: Record<string, unknown>, msg: string) => console.warn(JSON.stringify({ ...obj, msg })),
+      error: (obj: Record<string, unknown>, msg: string) => console.error(JSON.stringify({ ...obj, msg })),
+    };
+
+    gameServer = new GameServer(gameLogger);
+
+    // 3. Create Fastify app with access to the RoomManager
+    app = await createApp(gameServer.getRoomManager());
+
+    // 4. Start HTTP server
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
-    app.log.info({ port: config.PORT }, 'INFO [server] server started on port');
+    app.log.info({ port: config.PORT }, 'INFO [server] HTTP server started');
+
+    // 5. Start WebSocket server
+    await gameServer.listen(config.WS_PORT);
+    app.log.info({ wsPort: config.WS_PORT }, 'INFO [server] WebSocket server started');
+
   } catch (err) {
     console.error('ERROR [server] startup failed', err);
     process.exit(1);
   }
 
   async function shutdown(signal: string): Promise<void> {
-    if (!app) return;
-    app.log.info({ signal }, 'INFO [server] shutting down');
-    await app.close();
+    if (app) app.log.info({ signal }, 'INFO [server] shutting down');
+    gameServer?.close();
+    if (app) await app.close();
     await disconnectDB();
     process.exit(0);
   }

@@ -31,6 +31,8 @@ Edit `.env` and set the required variables:
 ```env
 DATABASE_URL="postgresql://postgres:password@localhost:5432/orris?schema=public"
 JWT_SECRET="your-secret-min-32-chars"
+PORT=3000
+WS_PORT=3002
 ```
 
 See [Configuration](configuration.md) for all available variables.
@@ -53,7 +55,7 @@ npx prisma studio
 ## Running the Project
 
 ```bash
-# Backend (Fastify on port 3000)
+# Backend HTTP (Fastify on port 3000) + WebSocket game server (port 3002)
 npm run dev:backend
 
 # Frontend (Next.js on port 3001, in a separate terminal)
@@ -77,7 +79,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```bash
 cd backend
 npm test
-# → 7 passed
+# → 33 passed
 ```
 
 ## Build for Production
@@ -89,5 +91,6 @@ npm run build        # builds all workspaces
 ## See Also
 
 - [Configuration](configuration.md) — all environment variables
-- [API Reference](api.md) — auth endpoints
+- [API Reference](api.md) — auth and rooms endpoints
+- [WebSocket Protocol](websocket-protocol.md) — connect to game server
 - [Architecture](architecture.md) — project structure

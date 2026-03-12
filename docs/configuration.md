@@ -15,6 +15,7 @@ cp .env.example .env
 | `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
 | `JWT_SECRET` | ✅ | — | Secret key for signing JWT tokens |
 | `PORT` | — | `3000` | Fastify HTTP server port |
+| `WS_PORT` | — | `3002` | uWebSockets.js WebSocket game server port |
 | `NODE_ENV` | — | `development` | Runtime environment |
 | `LOG_LEVEL` | — | `info` | Pino log level |
 
@@ -64,6 +65,18 @@ PORT=3000
 
 ---
 
+### WS_PORT
+
+WebSocket game server port (uWebSockets.js). Clients connect to this port directly via `WebSocket`.
+
+```env
+WS_PORT=3002
+```
+
+Must be different from `PORT` and from the frontend dev server port (Next.js defaults to 3001). Make sure this port is accessible from the browser if the game server is deployed behind a reverse proxy.
+
+---
+
 ### NODE_ENV
 
 Controls behavior of the server:
@@ -102,7 +115,9 @@ JWT_SECRET="change-me-in-production"
 
 # Server
 PORT=3000
+WS_PORT=3002
 NODE_ENV=development
+CORS_ORIGINS=https://yourapp.com
 
 # Logging
 LOG_LEVEL=info

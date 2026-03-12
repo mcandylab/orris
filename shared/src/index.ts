@@ -1,7 +1,7 @@
 // ─── WebSocket Protocol Op-codes ─────────────────────────────────────────────
 
 /** Messages sent from client to server */
-export const enum ClientOp {
+export enum ClientOp {
   JOIN  = 0x01, // join a room with a player name
   INPUT = 0x02, // movement + shoot intent
   SPAWN = 0x03, // respawn after death
@@ -9,7 +9,7 @@ export const enum ClientOp {
 }
 
 /** Messages sent from server to client */
-export const enum ServerOp {
+export enum ServerOp {
   WELCOME    = 0x01, // player id + room metadata
   SNAPSHOT   = 0x02, // full or delta state snapshot
   DEATH      = 0x03, // this player died
@@ -53,7 +53,7 @@ export interface RoomInfo {
 
 // ─── Tank Definitions ─────────────────────────────────────────────────────────
 
-export const enum TankType {
+export enum TankType {
   // Tier 1 (starting tank)
   BASIC        = 0,
 
