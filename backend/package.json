@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "test": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
@@ -17,14 +18,17 @@
     "@fastify/rate-limit": "^10.3.0",
     "@orris/shared": "*",
     "@prisma/client": "^5.16.1",
+    "bcryptjs": "^2.4.3",
     "fastify": "^5.8.2",
     "fastify-plugin": "^5.1.0",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v20.51.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.14.11",
     "prisma": "^5.16.1",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.0"
   }
 }

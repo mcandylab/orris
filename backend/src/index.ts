@@ -7,17 +7,19 @@ import jwtPlugin from './api/plugins/jwt';
 import rateLimitPlugin from './api/plugins/rateLimit';
 import apiRoutes from './api/routes/index';
 
-export function createApp(): FastifyInstance {
-  console.debug('DEBUG [server] creating Fastify app');
+export async function createApp(): Promise<FastifyInstance> {
+  const isTest = config.NODE_ENV === 'test';
 
   const app = Fastify({
-    logger: {
-      level: config.LOG_LEVEL,
-      transport:
-        config.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty', options: { colorize: true } }
-          : undefined,
-    },
+    logger: isTest
+      ? false
+      : {
+          level: config.LOG_LEVEL,
+          transport:
+            config.NODE_ENV !== 'production'
+              ? { target: 'pino-pretty', options: { colorize: true } }
+              : undefined,
+        },
     trustProxy: true,
   });
 
@@ -26,16 +28,20 @@ export function createApp(): FastifyInstance {
     if (error instanceof AppError) {
       app.log.warn({ statusCode: error.statusCode, code: error.code }, `WARN [api] ${error.message}`);
       return reply.status(error.statusCode).send({
-        error: { code: error.code, message: error.message, statusCode: error.statusCode },
+        error: error.code,
+        message: error.message,
+        statusCode: error.statusCode,
       });
     }
 
     // Fastify validation errors
-    if (error.validation) {
-      const message = error.message;
-      app.log.warn({ statusCode: 422 }, `WARN [api] validation error: ${message}`);
-      return reply.status(422).send({
-        error: { code: 'VALIDATION_ERROR', message, statusCode: 422, details: error.validation },
+    if (error.validation || error.statusCode === 400 || error.statusCode === 422) {
+      const statusCode = error.statusCode ?? 400;
+      app.log.warn({ statusCode }, `WARN [api] validation error: ${error.message}`);
+      return reply.status(statusCode).send({
+        error: 'VALIDATION_ERROR',
+        message: error.message,
+        statusCode,
       });
     }
 
@@ -43,9 +49,16 @@ export function createApp(): FastifyInstance {
     const message = config.NODE_ENV === 'production' ? 'Internal server error' : error.message;
     app.log.error({ err: error, statusCode: 500 }, `ERROR [api] ${error.message}`);
     return reply.status(500).send({
-      error: { code: 'INTERNAL_ERROR', message, statusCode: 500 },
+      error: 'INTERNAL_SERVER_ERROR',
+      message,
+      statusCode: 500,
     });
   });
+
+  await app.register(corsPlugin);
+  await app.register(jwtPlugin);
+  await app.register(rateLimitPlugin);
+  await app.register(apiRoutes);
 
   return app;
 }
@@ -55,13 +68,7 @@ async function start(): Promise<void> {
 
   try {
     await connectDB();
-    app = createApp();
-
-    await app.register(corsPlugin);
-    await app.register(jwtPlugin);
-    await app.register(rateLimitPlugin);
-
-    await app.register(apiRoutes);
+    app = await createApp();
 
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
     app.log.info({ port: config.PORT }, 'INFO [server] server started on port');

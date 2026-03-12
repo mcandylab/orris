@@ -23,13 +23,24 @@ Orris — real-time multiplayer браузерная IO-игра в стиле d
 orris/
 ├── backend/                    # Fastify HTTP + uWebSockets.js игровой сервер
 │   ├── src/
-│   │   ├── index.ts            # Точка входа, запуск Fastify
-│   │   ├── api/                # REST маршруты: auth, stats, leaderboard
-│   │   ├── db/                 # Prisma client и хелперы
-│   │   ├── game/               # Игровая логика: комнаты, танки, снаряды, физика
+│   │   ├── config.ts           # Env vars (единая точка конфигурации)
+│   │   ├── index.ts            # Composition root: createApp(), start()
+│   │   ├── api/
+│   │   │   ├── errors.ts       # Иерархия AppError (400/401/409/404/500)
+│   │   │   ├── plugins/jwt.ts  # @fastify/jwt плагин + app.authenticate
+│   │   │   └── routes/
+│   │   │       ├── index.ts    # Регистрация всех маршрутов
+│   │   │       └── auth.ts     # POST /api/auth/register, /api/auth/login
+│   │   ├── db/
+│   │   │   ├── client.ts       # PrismaClient singleton, connectDB/disconnectDB
+│   │   │   └── repositories/
+│   │   │       ├── UserRepository.ts
+│   │   │       └── StatsRepository.ts
+│   │   ├── game/               # ⚡ Чистое ядро — 0 внешних зависимостей
 │   │   └── ws/                 # WebSocket обработчики и менеджер комнат
 │   ├── prisma/
-│   │   └── schema.prisma       # Схема БД (User, PlayerStats)
+│   │   ├── schema.prisma       # Схема БД (User, PlayerStats)
+│   │   └── migrations/         # SQL-миграции Prisma
 │   ├── package.json
 │   └── tsconfig.json
 │
@@ -77,6 +88,16 @@ orris/
 - `JWT_SECRET` — секрет для JWT токенов
 - `PORT` — порт Fastify HTTP сервера (default: 3000)
 - `LOG_LEVEL` — уровень логирования (debug/info/warn/error)
+
+## Документация
+
+| Файл | Назначение |
+|------|-----------|
+| `README.md` | Landing page проекта |
+| `docs/getting-started.md` | Установка, настройка, первый запуск |
+| `docs/architecture.md` | Структура монорепо, границы модулей, паттерны |
+| `docs/api.md` | Auth endpoints, JWT формат, ошибки |
+| `docs/configuration.md` | Переменные окружения |
 
 ## AI Контекст
 
