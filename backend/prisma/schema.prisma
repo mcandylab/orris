@@ -1,0 +1,35 @@
+// Prisma schema for Orris game backend
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stats PlayerStats?
+
+  @@map("users")
+}
+
+model PlayerStats {
+  id               String @id @default(cuid())
+  userId           String @unique
+  totalKills       Int    @default(0)
+  totalDeaths      Int    @default(0)
+  bestScore        Int    @default(0)
+  totalGamesPlayed Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("player_stats")
+}

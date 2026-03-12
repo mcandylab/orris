@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "composite": true,
+    "paths": {
+      "@orris/shared": ["../shared/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "../shared" }
+  ],
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
