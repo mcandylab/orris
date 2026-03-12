@@ -72,6 +72,29 @@ Clients send **inputs only** (move direction, shoot intent). The server computes
 Client ──(input)──► server ──(validated state)──► all clients in room
 ```
 
+### Tank Firing Patterns
+
+Each tank type has a `FiringPattern` that determines how bullets are spawned:
+
+| Pattern | Tanks | Description |
+|---------|-------|-------------|
+| `SINGLE` | Basic, Sniper, Machine Gun, Assassin, Destroyer, Overseer | One centered bullet |
+| `TWIN` | Twin | Two forward-facing bullets |
+| `FLANK` | Flank Guard | Front + back bullets |
+| `TRIPLE_SPREAD` | Triple Shot | Three bullets in a spread |
+| `DOUBLE_ANGLED` | Hunter | Two angled bullets |
+
+Implementation in `CombatSystem.processShooting()`:
+1. Get `firingPattern` from `TankDefinition`
+2. Call `calculateBulletAngles(pattern)` to get spawn parameters
+3. Create multiple bullets based on the pattern
+
+```typescript
+// Example: Twin tank fires 2 bullets
+const params = calculateBulletAngles(FiringPattern.TWIN);
+// Returns: [{offsetX: -10}, {offsetX: 10}]
+```
+
 ### Error Handling
 
 All application errors extend `AppError`:
