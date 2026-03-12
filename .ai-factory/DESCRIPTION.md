@@ -19,6 +19,8 @@ Orris is a real-time multiplayer browser-based IO game inspired by diep.io and a
 - **Backend HTTP:** Fastify (REST API, auth, room management)
 - **Backend WebSocket:** uWebSockets.js (ultra-fast real-time game communication)
 - **Database:** PostgreSQL + Prisma ORM
+- **Auth:** @fastify/jwt (JWT tokens) + bcryptjs (password hashing)
+- **Testing:** Vitest + Fastify app.inject() (integration tests, no real DB)
 - **Real-time Protocol:** Binary WebSocket messages (efficient for game loop)
 
 ## Project Structure

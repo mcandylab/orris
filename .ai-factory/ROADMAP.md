@@ -5,8 +5,8 @@
 ## Milestones
 
 - [x] **Monorepo Setup** — TypeScript монорепо с `backend/`, `frontend/`, `shared/` пакетами и общими конфигами
-- [ ] **Backend Foundation** — Fastify HTTP сервер, структура проекта, pino логи, обработка ошибок
-- [ ] **Database & Auth** — Prisma схема, PostgreSQL, регистрация и вход игроков, JWT токены
+- [x] **Backend Foundation** — Fastify HTTP сервер, структура проекта, pino логи, обработка ошибок
+- [x] **Database & Auth** — Prisma схема, PostgreSQL, регистрация и вход игроков, JWT токены
 - [ ] **WebSocket Game Server** — uWebSockets.js, менеджер комнат (80 игроков), бинарный протокол, auto-scaling
 - [ ] **Core Game Engine** — фиксированный tick loop (20 TPS), физика движения, коллизии, границы карты, система снарядов
 - [ ] **Tank System** — несколько типов танков с уникальными снарядами, характеристиками и балансом
@@ -24,3 +24,5 @@
 | Milestone | Date |
 |-----------|------|
 | Monorepo Setup | 2026-03-12 |
+| Backend Foundation | 2026-03-12 |
+| Database & Auth | 2026-03-12 |
