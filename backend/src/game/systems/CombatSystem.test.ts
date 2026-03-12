@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processShooting, resolveHits, updateBullets } from './CombatSystem';
+import { processShooting, resolveHits, updateBullets, calculateBulletAngles } from './CombatSystem';
 import { Player } from '../entities/Player';
 import { Bullet } from '../entities/Bullet';
 import { Room, Logger } from '../engine/types';
-import { TankType } from '@orris/shared';
+import { TankType, FiringPattern } from '@orris/shared';
 import { getTankDefinition } from '../entities/Tank';
 
 function mockLogger(): Logger {
@@ -128,5 +128,110 @@ describe('CombatSystem.updateBullets', () => {
     updateBullets(room, 1); // 1s tick — well past lifetime
 
     expect(room.bullets.size).toBe(0);
+  });
+});
+
+describe('CombatSystem.calculateBulletAngles', () => {
+  it('returns single bullet for SINGLE pattern', () => {
+    const params = calculateBulletAngles(FiringPattern.SINGLE);
+    expect(params).toHaveLength(1);
+    expect(params[0]).toEqual({ relativeDx: 0, relativeDy: 0, offsetX: 0, offsetY: 0 });
+  });
+
+  it('returns two bullets for TWIN pattern', () => {
+    const params = calculateBulletAngles(FiringPattern.TWIN);
+    expect(params).toHaveLength(2);
+    expect(params[0].offsetX).toBeLessThan(params[1].offsetX); // -10 < 10
+    expect(params[0].relativeDx).toBe(-0.1);
+    expect(params[1].relativeDx).toBe(0.1);
+  });
+
+  it('returns two bullets with opposite directions for FLANK pattern', () => {
+    const params = calculateBulletAngles(FiringPattern.FLANK);
+    expect(params).toHaveLength(2);
+    expect(params[0].relativeDy).toBe(-1); // forward
+    expect(params[1].relativeDy).toBe(1);  // backward
+    expect(params[0].offsetY).toBe(-15);
+    expect(params[1].offsetY).toBe(15);
+  });
+
+  it('returns three bullets for TRIPLE_SPREAD pattern', () => {
+    const params = calculateBulletAngles(FiringPattern.TRIPLE_SPREAD);
+    expect(params).toHaveLength(3);
+    expect(params[0].relativeDx).toBe(-0.15);
+    expect(params[1].relativeDx).toBe(0);
+    expect(params[2].relativeDx).toBe(0.15);
+  });
+
+  it('returns two angled bullets for DOUBLE_ANGLED pattern', () => {
+    const params = calculateBulletAngles(FiringPattern.DOUBLE_ANGLED);
+    expect(params).toHaveLength(2);
+    expect(params[0].relativeDx).toBe(-0.2);
+    expect(params[1].relativeDx).toBe(0.2);
+  });
+});
+
+describe('CombatSystem.processShooting multi-cannon', () => {
+  it('BASIC tank creates 1 bullet (SINGLE pattern)', () => {
+    const room = makeRoom();
+    const player = makePlayer(1);
+    player.tankType = TankType.BASIC;
+    player.pendingInput = { dx: 1, dy: 0, shoot: true };
+    player.lastShootTime = 0;
+
+    processShooting(room, player, 9999, mockLogger());
+
+    expect(room.bullets.size).toBe(1);
+  });
+
+  it('TWIN tank creates 2 bullets', () => {
+    const room = makeRoom();
+    const player = makePlayer(1);
+    player.tankType = TankType.TWIN;
+    player.pendingInput = { dx: 1, dy: 0, shoot: true };
+    player.lastShootTime = 0;
+
+    processShooting(room, player, 9999, mockLogger());
+
+    expect(room.bullets.size).toBe(2);
+  });
+
+  it('TRIPLE_SHOT tank creates 3 bullets', () => {
+    const room = makeRoom();
+    const player = makePlayer(1);
+    player.tankType = TankType.TRIPLE_SHOT;
+    player.pendingInput = { dx: 1, dy: 0, shoot: true };
+    player.lastShootTime = 0;
+
+    processShooting(room, player, 9999, mockLogger());
+
+    expect(room.bullets.size).toBe(3);
+  });
+
+  it('FLANK_GUARD tank creates 2 bullets in opposite directions', () => {
+    const room = makeRoom();
+    const player = makePlayer(1);
+    player.tankType = TankType.FLANK_GUARD;
+    player.pendingInput = { dx: 1, dy: 0, shoot: true };
+    player.lastShootTime = 0;
+
+    processShooting(room, player, 9999, mockLogger());
+
+    expect(room.bullets.size).toBe(2);
+    const bullets = Array.from(room.bullets.values());
+    const vySigns = bullets.map(b => Math.sign(b.vy));
+    expect(vySigns[0]).not.toBe(vySigns[1]); // opposite directions
+  });
+
+  it('HUNTER tank creates 2 angled bullets', () => {
+    const room = makeRoom();
+    const player = makePlayer(1);
+    player.tankType = TankType.HUNTER;
+    player.pendingInput = { dx: 1, dy: 0, shoot: true };
+    player.lastShootTime = 0;
+
+    processShooting(room, player, 9999, mockLogger());
+
+    expect(room.bullets.size).toBe(2);
   });
 });
