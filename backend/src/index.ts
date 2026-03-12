@@ -1,81 +1,92 @@
-import Fastify from 'fastify';
+import Fastify, { FastifyError, FastifyInstance } from 'fastify';
 import { config } from './config';
 import { connectDB, disconnectDB } from './db/client';
-import jwtPlugin from './api/plugins/jwt';
-import { registerRoutes } from './api/routes/index';
 import { AppError } from './api/errors';
+import corsPlugin from './api/plugins/cors';
+import jwtPlugin from './api/plugins/jwt';
+import rateLimitPlugin from './api/plugins/rateLimit';
+import apiRoutes from './api/routes/index';
 
-export async function createApp() {
+export async function createApp(): Promise<FastifyInstance> {
   const isTest = config.NODE_ENV === 'test';
-  const isDev = config.NODE_ENV === 'development';
 
   const app = Fastify({
     logger: isTest
       ? false
       : {
           level: config.LOG_LEVEL,
-          transport: isDev
-            ? { target: 'pino-pretty', options: { colorize: true } }
-            : undefined,
+          transport:
+            config.NODE_ENV !== 'production'
+              ? { target: 'pino-pretty', options: { colorize: true } }
+              : undefined,
         },
+    trustProxy: true,
   });
 
-  // Error handler for AppError hierarchy
-  app.setErrorHandler((err, request, reply) => {
-    if (err instanceof AppError) {
-      app.log.warn({ err, url: request.url }, 'WARN [api] app error: %s', err.message);
-      return reply.status(err.statusCode).send({
-        error: err.code ?? err.name,
-        message: err.message,
-        statusCode: err.statusCode,
+  // Global error handler (Fastify v5: error is typed as FastifyError)
+  app.setErrorHandler<FastifyError>((error, _request, reply) => {
+    if (error instanceof AppError) {
+      app.log.warn({ statusCode: error.statusCode, code: error.code }, `WARN [api] ${error.message}`);
+      return reply.status(error.statusCode).send({
+        error: error.code,
+        message: error.message,
+        statusCode: error.statusCode,
       });
     }
 
-    // Fastify validation errors (400/422)
-    if (err.statusCode === 400 || err.statusCode === 422) {
-      return reply.status(err.statusCode).send({
+    // Fastify validation errors
+    if (error.validation || error.statusCode === 400 || error.statusCode === 422) {
+      const statusCode = error.statusCode ?? 400;
+      app.log.warn({ statusCode }, `WARN [api] validation error: ${error.message}`);
+      return reply.status(statusCode).send({
         error: 'VALIDATION_ERROR',
-        message: err.message,
-        statusCode: err.statusCode,
+        message: error.message,
+        statusCode,
       });
     }
 
-    app.log.error({ err, url: request.url }, 'ERROR [api] unhandled error');
+    // Unexpected errors — 500
+    const message = config.NODE_ENV === 'production' ? 'Internal server error' : error.message;
+    app.log.error({ err: error, statusCode: 500 }, `ERROR [api] ${error.message}`);
     return reply.status(500).send({
       error: 'INTERNAL_SERVER_ERROR',
-      message: 'An unexpected error occurred',
+      message,
       statusCode: 500,
     });
   });
 
+  await app.register(corsPlugin);
   await app.register(jwtPlugin);
-  await registerRoutes(app);
+  await app.register(rateLimitPlugin);
+  await app.register(apiRoutes);
 
   return app;
 }
 
 async function start(): Promise<void> {
-  const app = await createApp();
+  let app: FastifyInstance | null = null;
+
   try {
-    app.log.info({ port: config.PORT }, 'LOG [backend] server starting');
     await connectDB();
+    app = await createApp();
+
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
-    app.log.info({ port: config.PORT }, 'LOG [backend] server started');
+    app.log.info({ port: config.PORT }, 'INFO [server] server started on port');
   } catch (err) {
-    app.log.error({ err }, 'ERROR [backend] startup failed');
-    await disconnectDB().catch(() => {});
+    console.error('ERROR [server] startup failed', err);
     process.exit(1);
   }
 
-  const shutdown = async () => {
-    app.log.info('LOG [backend] shutting down');
+  async function shutdown(signal: string): Promise<void> {
+    if (!app) return;
+    app.log.info({ signal }, 'INFO [server] shutting down');
     await app.close();
     await disconnectDB();
     process.exit(0);
-  };
+  }
 
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start();

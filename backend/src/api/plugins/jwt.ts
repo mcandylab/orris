@@ -23,22 +23,18 @@ declare module 'fastify' {
 }
 
 export default fp(async function jwtPlugin(app: FastifyInstance) {
-  console.debug('DEBUG [jwt] registering JWT plugin');
+  await app.register(fastifyJwt, { secret: config.JWT_SECRET });
 
-  await app.register(fastifyJwt, {
-    secret: config.JWT_SECRET,
-  });
-
-  app.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
-    console.debug('DEBUG [jwt] verifying token');
+  app.decorate('authenticate', async function (request: FastifyRequest, _reply: FastifyReply) {
     try {
       await request.jwtVerify();
-      console.debug('DEBUG [jwt] token valid userId=%s', request.user.userId);
+      app.log.debug({ userId: request.user.userId }, 'DEBUG [jwt] token verified');
     } catch (err) {
-      console.warn('WARN [jwt] token verification failed: %s', (err as Error).message);
+      const reason = err instanceof Error ? err.message : String(err);
+      app.log.warn({ reason }, 'WARN [jwt] invalid token');
       throw new UnauthorizedError('Invalid or expired token');
     }
   });
 
-  console.debug('DEBUG [jwt] JWT plugin registered');
+  app.log.debug('DEBUG [jwt] JWT plugin registered');
 });
