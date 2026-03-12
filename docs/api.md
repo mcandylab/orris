@@ -1,4 +1,4 @@
-[← Architecture](architecture.md) · [Back to README](../README.md) · [Configuration →](configuration.md)
+[← WebSocket Protocol](websocket-protocol.md) · [Back to README](../README.md) · [Configuration →](configuration.md)
 
 # API Reference
 
@@ -103,6 +103,38 @@ Authenticate an existing player.
 
 ---
 
+## Game Endpoints
+
+### GET /api/rooms
+
+Returns the list of active game rooms with player counts. No authentication required.
+
+**Response `200 OK`**
+
+```json
+{
+  "rooms": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "playerCount": 12,
+      "maxPlayers": 80,
+      "state": "running"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Room UUID |
+| `playerCount` | number | Current number of connected players |
+| `maxPlayers` | number | Maximum capacity (always 80) |
+| `state` | string | `waiting` \| `running` \| `closing` |
+
+When a room reaches 80 players, a new room is created automatically (auto-scaling).
+
+---
+
 ## Utility Endpoints
 
 ### GET /health
@@ -172,5 +204,6 @@ model PlayerStats {
 ## See Also
 
 - [Getting Started](getting-started.md) — installation and first requests
+- [WebSocket Protocol](websocket-protocol.md) — real-time game connection
 - [Architecture](architecture.md) — error handling and auth patterns
 - [Configuration](configuration.md) — JWT_SECRET setup

@@ -1,4 +1,4 @@
-[← Getting Started](getting-started.md) · [Back to README](../README.md) · [API Reference →](api.md)
+[← Getting Started](getting-started.md) · [Back to README](../README.md) · [WebSocket Protocol →](websocket-protocol.md)
 
 # Architecture
 
@@ -24,11 +24,18 @@ orris/
 │       │       ├── UserRepository.ts
 │       │       └── StatsRepository.ts
 │       ├── game/                 # ⚡ PURE CORE — zero external dependencies
-│       │   ├── engine/           # RoomManager, GameLoop
-│       │   ├── entities/         # Player, Tank, Bullet
-│       │   └── systems/          # PhysicsSystem, CombatSystem, XpSystem
+│       │   ├── engine/
+│       │   │   ├── types.ts      # Room, PlayerInput, Logger interfaces
+│       │   │   ├── RoomManager.ts # Auto-scaling room lifecycle
+│       │   │   └── GameLoop.ts   # Fixed-tick loop (20 TPS)
+│       │   └── entities/
+│       │       ├── Player.ts     # Player state + applyInput()
+│       │       ├── Bullet.ts     # Bullet movement + expiry
+│       │       └── Tank.ts       # getTankDefinition() for all 10 tank types
 │       └── ws/                   # WebSocket layer (uWebSockets.js)
-│           ├── GameServer.ts
+│           ├── GameServer.ts     # uWS App, listen, pub/sub
+│           ├── GameContext.ts    # Shared context for handlers
+│           ├── types.ts          # PlayerWsData
 │           ├── handlers/         # onOpen, onMessage, onClose
 │           └── protocol/         # Binary encoder/decoder
 ├── frontend/         # Next.js + Pixi.js web client
@@ -42,12 +49,12 @@ orris/
 ## Dependency Rules
 
 ```
-game/   ──────────────────► nothing (pure core)
-ws/     ──────────────────► game/ only
-api/    ──────────────────► db/ only
-db/     ──────────────────► Prisma Client
-index.ts ─────────────────► api/, db/ (composition root)
-all     ──────────────────► @orris/shared (types)
+game/    ──────────────────► nothing (pure core)
+ws/      ──────────────────► game/ only
+api/     ──────────────────► db/ only
+db/      ──────────────────► Prisma Client
+index.ts ─────────────────► ws/, api/, db/ (composition root)
+all      ──────────────────► @orris/shared (types)
 ```
 
 **Forbidden dependencies:**
@@ -88,14 +95,26 @@ Fastify's `setErrorHandler` catches them and returns structured JSON:
 Structured JSON logs via Fastify's built-in pino logger. Format:
 
 ```
-INFO  [backend]   — server lifecycle
-DEBUG [db]        — database connections
-DEBUG [db:users]  — UserRepository operations
-DEBUG [db:stats]  — StatsRepository operations
-DEBUG [auth]      — auth route operations
-WARN  [auth]      — failed attempts, conflicts
-INFO  [auth]      — successful register/login
-WARN  [jwt]       — token verification failures
+INFO  [server]        — HTTP + WebSocket server lifecycle
+DEBUG [config]        — config loading
+DEBUG [db]            — database connections
+DEBUG [db:users]      — UserRepository operations
+DEBUG [db:stats]      — StatsRepository operations
+DEBUG [auth]          — auth route operations
+WARN  [auth]          — failed attempts, conflicts
+INFO  [auth]          — successful register/login
+WARN  [jwt]           — token verification failures
+INFO  [GameServer]    — WebSocket server listen / close
+INFO  [RoomManager]   — room created / destroyed
+DEBUG [RoomManager]   — player add/remove
+INFO  [GameLoop]      — loop start / stop
+DEBUG [GameLoop]      — periodic tick summary (every 100 ticks)
+DEBUG [onOpen]        — player connected
+DEBUG [onMessage]     — client message received
+DEBUG [onClose]       — player disconnected
+WARN  [onMessage]     — unknown op or decode error
+DEBUG [encoder]       — encode op type + size
+DEBUG [decoder]       — decode op type + size
 ```
 
 Log level is controlled by `LOG_LEVEL` env var (default: `info`). Set to `debug` for verbose DB logs.
@@ -113,5 +132,6 @@ const response = await app.inject({ method: 'POST', url: '/api/auth/register', .
 ## See Also
 
 - [Getting Started](getting-started.md) — setup and first run
+- [WebSocket Protocol](websocket-protocol.md) — binary protocol and GameServer details
 - [API Reference](api.md) — endpoint contracts
 - [Configuration](configuration.md) — env vars

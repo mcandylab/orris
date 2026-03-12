@@ -54,7 +54,8 @@ curl -X POST http://localhost:3000/api/auth/register \
 |-------|-------------|
 | [Getting Started](docs/getting-started.md) | Prerequisites, installation, first run |
 | [Architecture](docs/architecture.md) | Monorepo structure, module boundaries, patterns |
-| [API Reference](docs/api.md) | Auth endpoints, JWT format, error responses |
+| [WebSocket Protocol](docs/websocket-protocol.md) | Binary protocol, game loop, room management |
+| [API Reference](docs/api.md) | HTTP endpoints, JWT format, error responses |
 | [Configuration](docs/configuration.md) | Environment variables, database setup |
 
 ## Tech Stack

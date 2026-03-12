@@ -37,7 +37,13 @@ orris/
 │   │   │       ├── UserRepository.ts
 │   │   │       └── StatsRepository.ts
 │   │   ├── game/               # ⚡ Чистое ядро — 0 внешних зависимостей
-│   │   └── ws/                 # WebSocket обработчики и менеджер комнат
+│   │   │   ├── engine/         # RoomManager, GameLoop, types
+│   │   │   └── entities/       # Player, Bullet, Tank
+│   │   └── ws/                 # WebSocket слой (uWebSockets.js)
+│   │       ├── GameServer.ts   # uWS App, listen, pub/sub
+│   │       ├── GameContext.ts  # Общий контекст для handlers
+│   │       ├── handlers/       # onOpen, onMessage, onClose
+│   │       └── protocol/       # Binary encoder/decoder
 │   ├── prisma/
 │   │   ├── schema.prisma       # Схема БД (User, PlayerStats)
 │   │   └── migrations/         # SQL-миграции Prisma
@@ -87,6 +93,7 @@ orris/
 - `DATABASE_URL` — строка подключения PostgreSQL
 - `JWT_SECRET` — секрет для JWT токенов
 - `PORT` — порт Fastify HTTP сервера (default: 3000)
+- `WS_PORT` — порт WebSocket игрового сервера (default: 3002)
 - `LOG_LEVEL` — уровень логирования (debug/info/warn/error)
 
 ## Документация
@@ -96,7 +103,8 @@ orris/
 | `README.md` | Landing page проекта |
 | `docs/getting-started.md` | Установка, настройка, первый запуск |
 | `docs/architecture.md` | Структура монорепо, границы модулей, паттерны |
-| `docs/api.md` | Auth endpoints, JWT формат, ошибки |
+| `docs/websocket-protocol.md` | Бинарный протокол, GameServer, RoomManager API |
+| `docs/api.md` | HTTP endpoints, JWT формат, ошибки |
 | `docs/configuration.md` | Переменные окружения |
 
 ## AI Контекст
