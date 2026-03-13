@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { awardKillXp, checkLevelUp } from './XpSystem';
 import { Player } from '../entities/Player';
-import { TankType, XP_THRESHOLDS, EVOLUTION_LEVELS } from '@orris/shared';
+import { TankType, XP_THRESHOLDS, EVOLUTION_LEVELS, MAX_LEVEL } from '@orris/shared';
 import { Logger } from '../engine/types';
 
 function mockLogger(): Logger {
@@ -29,6 +29,20 @@ describe('XpSystem.awardKillXp', () => {
     const victim = makePlayer(2);
     const xp = awardKillXp(killer, victim);
     expect(xp).toBe(50);
+  });
+
+  it('does not stop at MAX_LEVEL - score can exceed threshold', () => {
+    const killer = makePlayer(1);
+    killer.level = MAX_LEVEL;
+    killer.score = XP_THRESHOLDS[MAX_LEVEL];
+    const victim = makePlayer(2);
+    victim.score = 1000;
+
+    const xp = awardKillXp(killer, victim);
+
+    expect(xp).toBe(50 + 1000);
+    expect(killer.score).toBe(XP_THRESHOLDS[MAX_LEVEL] + xp);
+    expect(killer.level).toBe(MAX_LEVEL);
   });
 });
 
@@ -74,5 +88,16 @@ describe('XpSystem.checkLevelUp', () => {
     player.score = XP_THRESHOLDS[2];
     const event = checkLevelUp(player, mockLogger());
     expect(event?.evolutionChoices).toEqual([]);
+  });
+
+  it('cannot exceed MAX_LEVEL', () => {
+    const player = makePlayer(1);
+    player.level = MAX_LEVEL;
+    player.score = XP_THRESHOLDS[MAX_LEVEL] + 10000;
+
+    const event = checkLevelUp(player, mockLogger());
+
+    expect(event).toBeNull();
+    expect(player.level).toBe(MAX_LEVEL);
   });
 });
