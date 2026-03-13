@@ -158,3 +158,38 @@ const response = await app.inject({ method: 'POST', url: '/api/auth/register', .
 - [WebSocket Protocol](websocket-protocol.md) — binary protocol and GameServer details
 - [API Reference](api.md) — endpoint contracts
 - [Configuration](configuration.md) — env vars
+
+## XP & Leveling System
+
+### Server Side
+
+XP is awarded for kills and tracked in `XpSystem`:
+
+- `awardKillXp(killer, victim)` — awards `BASE_KILL_XP (50) + victim.score`
+- `checkLevelUp(player)` — checks if player crossed XP threshold, handles multi-level jumps
+
+XP thresholds are defined in `shared/src/index.ts`:
+
+```typescript
+export const XP_THRESHOLDS = [0, 0, 100, 250, 500, 900, 1500, 2500, 4000, 6000, 9000];
+export const MAX_LEVEL = 10;
+export const EVOLUTION_LEVELS = [3, 6, 9];
+```
+
+When a player levels up to an evolution level (3, 6, or 9), the server sends `LEVEL_UP` with evolution choices.
+
+### Client Side
+
+Frontend components in `frontend/game/` and `frontend/components/`:
+
+- `GameState.ts` — tracks playerLevel, playerScore, XP progress calculations
+- `GameClient.ts` — WebSocket client handling LEVEL_UP events and CHOOSE_EVOLUTION
+- `XpBar.tsx` — displays XP progress bar with current level
+- `EvolutionModal.tsx` — modal for selecting tank evolution (15s timer)
+- `GameHUD.tsx` — combines XP bar and evolution modal
+
+Flow:
+1. Server sends `LEVEL_UP` with new level and evolution choices
+2. `GameClient.handleLevelUp()` updates state and shows modal
+3. Player selects evolution
+4. `GameClient.sendEvolutionChoice()` sends selection to server
