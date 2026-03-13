@@ -1,12 +1,14 @@
 'use client';
 
-import { TankType } from '@orris/shared';
+import { TankType, TANK_DEFINITIONS } from '@orris/shared';
 import { CSSProperties, useState, useEffect } from 'react';
+import { calculateStatsDelta, getStatColor } from '../game/StatsUtils';
 
 interface EvolutionModalProps {
   choices: TankType[];
   onSelect: (tankType: TankType) => void;
   tankNames: Record<TankType, string>;
+  currentTankType: TankType;
 }
 
 const overlayStyle: CSSProperties = {
@@ -69,13 +71,44 @@ const choiceButtonStyle: (isSelected: boolean) => CSSProperties = (isSelected) =
   fontSize: '16px',
   fontWeight: 'bold',
   minWidth: '120px',
+  position: 'relative',
 });
+
+const statsTooltipStyle: CSSProperties = {
+  position: 'absolute',
+  bottom: '-220px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  border: '1px solid #4ade80',
+  borderRadius: '8px',
+  padding: '12px',
+  minWidth: '200px',
+  fontSize: '12px',
+  fontFamily: 'monospace',
+  color: '#fff',
+  whiteSpace: 'nowrap',
+  zIndex: 1001,
+  pointerEvents: 'none',
+};
+
+const statsRowStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginBottom: '4px',
+};
 
 const EVOLUTION_TIME_SECONDS = 15;
 
-export function EvolutionModal({ choices, onSelect, tankNames }: EvolutionModalProps) {
+export function EvolutionModal({
+  choices,
+  onSelect,
+  tankNames,
+  currentTankType,
+}: EvolutionModalProps) {
   const [timeLeft, setTimeLeft] = useState(EVOLUTION_TIME_SECONDS);
   const [selected, setSelected] = useState<TankType | null>(null);
+  const [hoveredTank, setHoveredTank] = useState<TankType | null>(null);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -106,15 +139,55 @@ export function EvolutionModal({ choices, onSelect, tankNames }: EvolutionModalP
         <div style={timerStyle}>Time: {timeLeft}s</div>
         
         <div style={choicesContainerStyle}>
-          {choices.map((choice) => (
-            <button
-              key={choice}
-              style={choiceButtonStyle(selected === choice)}
-              onClick={() => handleClick(choice)}
-            >
-              {tankNames[choice] || `Tank ${choice}`}
-            </button>
-          ))}
+          {choices.map((choice) => {
+            const delta = calculateStatsDelta(currentTankType, choice);
+            const isHovered = hoveredTank === choice;
+
+            return (
+              <div key={choice} style={{ position: 'relative' }}>
+                <button
+                  style={choiceButtonStyle(selected === choice)}
+                  onClick={() => handleClick(choice)}
+                  onMouseEnter={() => {
+                    setHoveredTank(choice);
+                    console.debug('DEBUG [EvolutionModal] hovering tank:', tankNames[choice]);
+                  }}
+                  onMouseLeave={() => setHoveredTank(null)}
+                >
+                  {tankNames[choice] || `Tank ${choice}`}
+                </button>
+
+                {isHovered && (
+                  <div style={statsTooltipStyle}>
+                    <div style={statsRowStyle}>
+                      <span>HP:</span>
+                      <span style={{ color: getStatColor(delta.health) }}>
+                        {delta.health > 0 ? '+' : ''}{delta.health}
+                      </span>
+                    </div>
+                    <div style={statsRowStyle}>
+                      <span>Speed:</span>
+                      <span style={{ color: getStatColor(delta.speed) }}>
+                        {delta.speed > 0 ? '+' : ''}{delta.speed}
+                      </span>
+                    </div>
+                    <div style={statsRowStyle}>
+                      <span>Damage:</span>
+                      <span style={{ color: getStatColor(delta.damage) }}>
+                        {delta.damage > 0 ? '+' : ''}{delta.damage}
+                      </span>
+                    </div>
+                    <div style={statsRowStyle}>
+                      <span>RoF:</span>
+                      <span style={{ color: getStatColor(delta.fireRate, true) }}>
+                        {delta.fireRate > 0 ? '+' : ''}{delta.fireRate}ms
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

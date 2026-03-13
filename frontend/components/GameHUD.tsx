@@ -1,8 +1,9 @@
 'use client';
 
-import { GameState } from '../game/GameState';
+import { GameState } from '@/game/GameState';
 import { XpBar } from './XpBar';
 import { EvolutionModal } from './EvolutionModal';
+import { TankNameDisplay } from './TankNameDisplay';
 import { TankType } from '@orris/shared';
 import { CSSProperties } from 'react';
 
@@ -36,17 +37,27 @@ const hudStyle: CSSProperties = {
 export function GameHUD({ state, onEvolutionSelect }: GameHUDProps) {
   const myPlayer = state.playerId !== null ? state.players.get(state.playerId) : null;
 
+  if (!myPlayer) {
+    console.debug('DEBUG [GameHUD] myPlayer not found, skipping render');
+    return null;
+  }
+
+  const currentTankName = TANK_NAMES[myPlayer.tankType];
+
+  console.debug('DEBUG [GameHUD] rendering with tank:', currentTankName);
+
   return (
     <div style={hudStyle}>
-      {myPlayer && (
-        <XpBar state={state} />
-      )}
-      
-      {state.showEvolutionModal && (
+      <TankNameDisplay tankName={currentTankName} />
+
+      <XpBar state={state} />
+
+      {state.showEvolutionModal && myPlayer && (
         <EvolutionModal
           choices={state.evolutionChoices}
           onSelect={onEvolutionSelect}
           tankNames={TANK_NAMES}
+          currentTankType={myPlayer.tankType}
         />
       )}
     </div>
